@@ -15,7 +15,11 @@ $SoftwareName = 'Chrome' # Search for an uninstall key with Displayname 'Chrome'
 #>
 # Edit the software displayname below
 
-$SoftwareName = ''
+clear
+Write-Host ''
+Write-Host 'This script checks if software name matching the input is insalled. Make sure to enter correct name!'
+Write-Host ''
+$SoftwareName = Read-host -Prompt 'Enter software name to check if it is installed'
 
 function Get-RegUninstallKey
 {
@@ -23,8 +27,8 @@ function Get-RegUninstallKey
 		[string]$DisplayName
 	)
 	$ErrorActionPreference = 'Continue'
-	$UserSID = ([System.Security.Principal.NTAccount](Get-CimInstance Win32_ComputerSystem).UserName).Translate([System.Security.Principal.SecurityIdentifier]).Value
-	$uninstallKeys = "registry::HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall", "registry::HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall","registry::HKU\$UserSID\Software\Microsoft\Windows\CurrentVersion\Uninstall"
+	#$UserSID = (New-Object -ComObject Microsoft.DiskQuota).TranslateLogonNameToSID((Get-CimInstance -Class Win32_ComputerSystem).Username)
+	$uninstallKeys = "registry::HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall", "registry::HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
 	$softwareTable = @()
 	
 	foreach ($key in $uninstallKeys)
@@ -33,7 +37,7 @@ function Get-RegUninstallKey
 	}
 	if ($DisplayName)
 	{
-		$softwareTable | Where-Object {$_.displayname -Like "*$DisplayName*"}
+		$softwareTable | where displayname -Like "*$DisplayName*"
 	}
 	else
 	{
@@ -45,10 +49,14 @@ function Get-RegUninstallKey
 $UninstallKey = Get-RegUninstallKey -DisplayName $SoftwareName
 if ($UninstallKey)
 {
-	Write-Output "$($SoftwareName) is installed"
+    Write-Output "keyword $($SoftwareName) matched software installed as $($UninstallKey.DisplayName)"
+    Write-Output "Uninstall string: $($UninstallKey.UninstallString)"
+	Start-Sleep -Seconds 10
 	exit 0
 }
 else
 {
-	exit 1
+	Write-Output "No software matching $($SoftwareName) was found installed"
+	Start-Sleep -Seconds 10
+    exit 1
 }
